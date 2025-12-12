@@ -31,7 +31,6 @@
 
     - name: Nach Ausführung aller Tasks, alle nicht mehr brauchbaren packets entfernen
       ansible.builtin.command: apt autoremove
-      when: upgrade_count | int > 0
 
     - name: Abschlussmeldung
       ansible.builtin.debug:
