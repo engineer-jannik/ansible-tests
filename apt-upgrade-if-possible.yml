@@ -1,0 +1,27 @@
+---
+- name: Update & upgrade Linux systems only if updates exist
+  hosts: linux
+  become: yes
+
+  tasks:
+
+    - name: Update package cache
+      ansible.builtin.apt:
+        update_cache: yes
+      register: update_result
+
+    - name: Check for available upgrades
+      ansible.builtin.apt:
+        upgrade: "no"
+        update_cache: no
+      register: check_upgrade
+
+    - name: Zeige Anzahl verfügbarer Upgrades
+      ansible.builtin.debug:
+        msg: "Es sind {{ check_upgrade.packages | length }} Pakete upgradebar."
+      when: check_upgrade.packages is defined
+
+    - name: Upgrade durchführen, wenn Pakete vorhanden sind
+      ansible.builtin.apt:
+        upgrade: yes
+      when: check_upgrade.packages | length > 0
