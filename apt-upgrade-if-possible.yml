@@ -8,11 +8,11 @@
 
   tasks:
 
-    - name: Update package cache
+    - name: Ansible -> apt update
       ansible.builtin.apt:
         update_cache: yes
 
-    - name: Check how many packages would be upgraded
+    - name: Ansible Command -> apt-get --just-print upgrade
       ansible.builtin.command: apt-get --just-print upgrade
       register: upgrade_check
       changed_when: false
@@ -21,20 +21,46 @@
       ansible.builtin.set_fact:
         upgrade_count: "{{ upgrade_check.stdout | regex_findall('Inst ') | length }}"
 
-    - name: Anzahl upgradebarer Pakete anzeigen
+    - name: Number of upgradeble packets
       ansible.builtin.debug:
         msg: "Es sind {{ upgrade_count }} Pakete upgradebar."
 
-    - name: Upgrade durchführen, wenn Pakete vorhanden sind
-      ansible.builtin.command: apt-get upgrade
+    - name: Upgrade if number of packets are >0
+      ansible.builtin.apt:
+        upgrade: yes
       when: upgrade_count | int > 0
 
-    - name: Nach Ausführung aller Tasks, alle nicht mehr brauchbaren packets entfernen
-      ansible.builtin.command: apt autoremove
 
-    - name: Abschlussmeldung
+    # --------------------------------------------------
+    # AUTOREMOVE-BLOCK
+    # --------------------------------------------------
+
+    - name: Ansible Command -> apt-get --just-print autoremove
+      ansible.builtin.command: apt-get --just-print autoremove
+      register: autoremove_check
+      changed_when: false
+
+    - name: Extract number of autoremovable packages
+      ansible.builtin.set_fact:
+        autoremove_count: "{{ autoremove_check.stdout | regex_findall('Remv ') | length }}"
+
+    - name: Number of autoremovable packets
       ansible.builtin.debug:
-        msg: "APT-Upgrade-Check abgeschlossen: Alle Hosts sind aktuell oder wurden aktualisiert."
+        msg: "Es sind {{ autoremove_count }} Pakete automatisch entfernbar."
+
+    - name: Ansible -> apt autoremove
+      ansible.builtin.apt:
+        autoremove: yes
+      when: autoremove_count | int > 0
+
+
+    # --------------------------------------------------
+    # ABSCHLUSSMELDUNG
+    # --------------------------------------------------
+
+    - name: End message
+      ansible.builtin.debug:
+        msg: "APT-Upgrade-Check abgeschlossen: Update, Upgrade & Autoremove durchgeführt (falls nötig)."
       run_once: true
       delegate_to: localhost
       changed_when: false
