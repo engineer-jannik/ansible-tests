@@ -6,7 +6,7 @@
     ansible_command_timeout: 120
 
   tasks:
-    - name: Ansible Command -> ping google.com
+    - name: Ansible Command -> ping google.com -t 3
       ansible.builtin.command: ping google.com -t 3
       changed_when: false
 
